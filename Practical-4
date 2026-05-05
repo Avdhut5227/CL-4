@@ -1,0 +1,58 @@
+4]. Design and implement a CNN for Image Classification a) Select a suitable image classification dataset
+(medical imaging, agricultural, etc.). b) Optimized with different hyper-parameters including learning rate,
+filter size, no. of layers, optimizers, dropouts, etc.
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+from tensorflow.keras.datasets import cifar10
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.optimizers import Adam
+
+(X_train, y_train), (X_test, y_test) = cifar10.load_data()
+
+X_train = X_train / 255.0
+X_test = X_test / 255.0
+y_train = to_categorical(y_train, 10)
+y_test = to_categorical(y_test, 10)
+
+def build_model(learning_rate=0.001, dropout_rate=0.5, filters=32):
+model = Sequential()
+# Conv Layer 1
+model.add(Conv2D(filters, (3,3), activation='relu', input_shape=(32,32,3)))
+model.add(MaxPooling2D((2,2)))
+# Conv Layer 2
+model.add(Conv2D(filters*2, (3,3), activation='relu'))
+model.add(MaxPooling2D((2,2)))
+# Conv Layer 3
+model.add(Conv2D(filters*4, (3,3), activation='relu'))
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dropout(dropout_rate))
+model.add(Dense(10, activation='softmax'))
+optimizer = Adam(learning_rate=learning_rate)
+model.compile(optimizer=optimizer,
+        loss='categorical_crossentropy',
+        metrics=['accuracy'])
+return model
+
+model1 = build_model(learning_rate=0.001, dropout_rate=0.5, filters=32)
+history1 = model1.fit(X_train, y_train, epochs=10, batch_size=64, validation_split=0.2)
+
+model2 = build_model(learning_rate=0.0005, dropout_rate=0.3, filters=64)
+history2 = model2.fit(X_train, y_train, epochs=5, batch_size=64, validation_split=0.2)
+
+loss1, acc1 = model1.evaluate(X_test, y_test)
+loss2, acc2 = model2.evaluate(X_test, y_test)
+
+print("Model 1 Accuracy:", acc1)
+print("Model 2 Accuracy:", acc2)
+
+plt.plot(history1.history['val_accuracy'], label='Model 1')
+plt.plot(history2.history['val_accuracy'], label='Model 2')
+plt.legend()
+plt.title("Validation Accuracy Comparison")
+plt.show()
+
